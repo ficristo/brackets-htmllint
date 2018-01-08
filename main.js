@@ -1,3 +1,5 @@
+/* global define, brackets, $ */
+
 define(function (require, exports, module) {
     "use strict";
     var namespace = 'brackets-htmllint';
@@ -16,39 +18,14 @@ define(function (require, exports, module) {
         var defer = new $.Deferred();
         loadConfigs(fullPath).done(function (options) {
             console.log("options: ", options);
-            htmllintDomain.exec("lint", html)
-                .done(function (errors) {
-                    // Success!
-                    var result = {
-                        errors: [],
-                    };
-                    for (var i = 0; i < errors.length; i++) {
-                        var error = errors[i];
-                        var newCode = error.code + ": ";
-                        var returnedError = {
-                            pos: {
-                                line: error.line - 1, // I don't know why.
-                                col: error.column
-                            },
-                            message: newCode,
-                            type: CodeInspection.Type.ERROR
-                        };
-
-                        // get the message!
-                        htmllintDomain.exec("getMessage", error.code, error.data)
-                            .done(function (message) {
-                                returnedError.message = newCode + message;
-                            });
-                        result.errors.push(returnedError);
-                        if (i === errors.length - 1) {
-                            defer.resolve(result);
-                        }
-                    }
+            htmllintDomain.exec("lint", html, options)
+                .done(function (result) {
+                    defer.resolve(result);
                 }).fail(function (err) {
                     console.error("Failed: ", err);
                     defer.reject(err);
                 });
-        })
+        });
         return defer.promise();
     }
 
@@ -89,7 +66,7 @@ define(function (require, exports, module) {
         lookUpFiles(rootPath, relPath).done(function (configs) {
             //console.log("returning: ", configs);
             result.resolve(configs);
-        })
+        });
 
         return result.promise();
     }
@@ -98,7 +75,7 @@ define(function (require, exports, module) {
         var result = new $.Deferred(),
             finalConfigs = {};
 
-        // any changes made here should also be changed below 
+        // any changes made here should also be changed below
         // (too lazy to combine in yet another function)
         getConfig(rootPath + relPath).done(function (configs) {
             //console.log(configs);
@@ -107,7 +84,7 @@ define(function (require, exports, module) {
                 if (configs.hasOwnProperty(key) && !finalConfigs[key]) {
                     finalConfigs[key] = configs[key];
                 }
-            })
+            });
             if (!(relPath.length > 0)) {
                 result.resolve(finalConfigs);
             }
@@ -117,14 +94,14 @@ define(function (require, exports, module) {
             // take off the '/' end of the path to get the new parent directory
             relPath = FileUtils.getDirectoryPath(relPath.substr(0, relPath.length - 1));
             //console.log("stripping to: ", relPath);
-            getConfig(rootPath + relPath).done(function (configs) {
+            getConfig(rootPath + relPath).done(function (configs) { // eslint-disable-line no-loop-func
                 //console.log(configs);
                 var keys = Object.keys(configs);
                 keys.forEach(function (key) {
                     if (configs.hasOwnProperty(key) && !finalConfigs[key]) {
                         finalConfigs[key] = configs[key];
                     }
-                })
+                });
                 if (!(relPath.length > 0)) {
                     result.resolve(finalConfigs);
                 }
@@ -134,7 +111,7 @@ define(function (require, exports, module) {
         return result.promise();
     }
 
-    /* 
+    /*
      * Takes a directory.
      * Uses the directory to look for the ".htmllintrc" file
      * and JSON parses it.

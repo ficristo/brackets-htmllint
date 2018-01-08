@@ -1,0 +1,11 @@
+{
+    "language": {
+        "javascript": {
+            "linting.prefer": ["ESLint"],
+            "linting.usePreferredOnly": true
+        }
+    },
+    "brackets-eslint.useLocalESLint": true,
+    "brackets-file-tree-exclude.excludeList": [
+    ]
+}
